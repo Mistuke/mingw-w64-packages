@@ -5,7 +5,7 @@
 _realname=binutils
 pkgbase=mingw-w64-${_realname}-phyx
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-pkgver=2.31
+pkgver=r1.f71919f2
 pkgrel=1
 provides=("${MINGW_PACKAGE_PREFIX}-${_realname}=${pkgver}")
 conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
@@ -18,9 +18,11 @@ depends=("${MINGW_PACKAGE_PREFIX}-libiconv" "${MINGW_PACKAGE_PREFIX}-zlib")
 #checkdepends=('dejagnu' 'bc')
 makedepends=("${MINGW_PACKAGE_PREFIX}-libiconv" "${MINGW_PACKAGE_PREFIX}-zlib")
 options=('staticlibs' '!distcc' '!ccache' 'debug' '!strip')
+_gitroot="https://github.com/Mistuke/binutils-gdb.git"
+_gitbranch="master"
+_gitname="${_realname}-git"
 #install=binutils.install
-source=("${_realname}-${pkgver}"::"git+https://github.com/Mistuke/binutils-gdb.git#branch=master" #branch=${_realname}-${_base_ver//./_}-branch"
-        0001-enable-gold-on.mingw32.patch
+source=(0001-enable-gold-on.mingw32.patch
         0002-check-for-unusual-file-harder.patch
         0003-enable-shared-bfd.all.patch
         0003-link-to-libibtl-and-libiberty.mingw.patch
@@ -35,9 +37,17 @@ source=("${_realname}-${pkgver}"::"git+https://github.com/Mistuke/binutils-gdb.g
         0110-binutils-mingw-gnu-print.patch
         0200-remove-provide-qualifiers.patch)
 #validpgpkeys=('')
-
 prepare() {
-  cd ${srcdir}/${_realname}-${pkgver}
+ msg "Synching to git server...."
+ if [ -d $_gitname ] ; then
+   cd $_gitname && git reset HEAD * && git checkout -- :/ && git pull origin $_gitbranch && cd ..
+   msg "The local files are updated."
+ else
+   git clone --depth=1 $_gitroot $_gitname --branch $_gitbranch
+ fi
+ msg "Sources sync done."
+
+  cd ${srcdir}/${_gitname}
   patch -p1 -i "${srcdir}"/0001-enable-gold-on.mingw32.patch
   patch -p1 -i "${srcdir}"/0002-check-for-unusual-file-harder.patch
   #patch -p1 -i "${srcdir}"/0003-enable-shared-bfd.all.patch
@@ -54,7 +64,15 @@ prepare() {
 
   # Upstream patches
   # https://sourceware.org/bugzilla/show_bug.cgi?id=22762
-  patch -p1 -i "${srcdir}"/0200-remove-provide-qualifiers.patch
+  # patch -p1 -i "${srcdir}"/0200-remove-provide-qualifiers.patch
+}
+
+pkgver() {
+  cd "$_gitname"
+  ( set -o pipefail
+    git describe --long 2>/dev/null | sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  )
 }
 
 build() {
@@ -71,12 +89,12 @@ build() {
     CFLAGS+=" -O3"
   fi
 
-  CFLAGS+=" --specs=msvcrt120.specs -D_USE_NATIVE_PE_CHECKSUM"
+  CFLAGS+=" --specs=${startdir}/msvcrt120.specs -D_USE_NATIVE_PE_CHECKSUM"
   CFLAGS+=" -lkernel32 -ldbghelp"
 
   [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
   mkdir -p build-${MINGW_CHOST} && cd build-${MINGW_CHOST}
-  ../${_realname}-${pkgver}/configure \
+  ../${_gitname}/configure \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
     --target=${MINGW_CHOST} \
@@ -122,8 +140,7 @@ package() {
   find  ${pkgdir}${MINGW_PREFIX}/share -type f -iname "opcodes.mo" -o -iname "bfd.mo" | xargs -rtl1 rm
 }
 
-sha256sums=('SKIP'
-            '93296b909e1a4f9d8a4bbe2437aafa17ca565ef6642a9812b0360c05be228c9d'
+sha256sums=('93296b909e1a4f9d8a4bbe2437aafa17ca565ef6642a9812b0360c05be228c9d'
             '2c99345fc575c3a060d6677537f636c6c4154fac0fde508070f3b6296c1060d4'
             'f084cf708da231584d1b1dd0fbdb6294ce176849c4f77d1666fa778df8d07781'
             '617adc1fd9fa66cc6e1da840b49edc1f88ae4bfd5b2807eeb34984eff8827e39'
