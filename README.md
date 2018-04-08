@@ -34,3 +34,12 @@ You have two options if you want to use these packages:
  ```
     pacman -U ${package-name}*.pkg.tar.xz
  ```
+
+To update hashes use:
+
+```
+updpkgsums
+makepkg -g >> PKGBUILD
+```
+
+More at https://wiki.archlinux.org/index.php/PKGBUILD
