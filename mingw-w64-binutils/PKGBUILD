@@ -22,18 +22,16 @@ _gitroot="https://github.com/Mistuke/binutils-gdb.git"
 _gitbranch="master"
 _gitname="${_realname}-git"
 #install=binutils.install
-source=(0001-enable-gold-on.mingw32.patch
-        0002-check-for-unusual-file-harder.patch
-        0010-bfd-Increase-_bfd_coff_max_nscns-to-65279.patch
-        0110-binutils-mingw-gnu-print.patch
-        0200-remove-provide-qualifiers.patch)
-sha256sums=('efeade848067e9a03f1918b1da0d37aaffa0b0127a06b5e9236229851d9d0c09'
-            'SKIP'
-            '93296b909e1a4f9d8a4bbe2437aafa17ca565ef6642a9812b0360c05be228c9d'
-            '2c99345fc575c3a060d6677537f636c6c4154fac0fde508070f3b6296c1060d4'
-            '604e76e0f702ced493ee22aa3c1768b4776b2008a7d70ae0dd35fe5be3522141'
-            '0f145655d4f2aae3383e0c0269d0c47b8a7176144bf0595425fc38b7ebf53153'
-            '28b6d20d1f7e1f29b61bdafff452f2421b7f5b084f69c9563ec4630b1f041abd')
+source=(0001-MinGW-w64-Two-fixes-for-unusual-files.patch
+        0002-MinGW-w64-Fix-libiberty-makefile.patch
+        0003-MinGW-w64-Fix-libibery-configure.patch
+        0004-MinGW-w64-Use-gnu-printf.patch
+        0005-bfd-Increase-_bfd_coff_max_nscns-to-65279.patch)
+sha256sums=('6f3b8bdaa41b3d2a7ab98fb819872fa988ebab580daf21522c32012530465e95'
+            '5b65eb12154216ccef02c93417468fedd2dd6b9029bb392e5616793136c1abb4'
+            '80a0934e863a211b4d76dcf24e8d61841b06d1f8094f3d657d46e337cae6c7f4'
+            '824d4cd28976127e0164216c0770bcad0aea29c95805e1e883f93a2cfc4ace3c'
+            'bd38317b28b894d5c0e0ba043fc2445af415f6e96bb9ac93c348748d21a43625')
 #validpgpkeys=('EAF1C276A747E9ED86210CBAC3126D3B4AE55E93')
 prepare() {
  msg "Synching to git server...."
@@ -46,14 +44,12 @@ prepare() {
  msg "Sources sync done."
 
   cd ${srcdir}/${_gitname}
-  patch -p1 -i "${srcdir}"/0001-enable-gold-on.mingw32.patch
-  patch -p1 -i "${srcdir}"/0002-check-for-unusual-file-harder.patch
-  patch -p1 -i "${srcdir}"/0010-bfd-Increase-_bfd_coff_max_nscns-to-65279.patch
-  patch -p1 -i "${srcdir}"/0110-binutils-mingw-gnu-print.patch
-
-  # Upstream patches
-  # https://sourceware.org/bugzilla/show_bug.cgi?id=22762
-  patch -p1 -i "${srcdir}"/0200-remove-provide-qualifiers.patch
+  #git am "${srcdir}"/0001-MinGW-w64-Two-fixes-for-unusual-files.patch
+  git am "${srcdir}"/0002-MinGW-w64-Fix-libiberty-makefile.patch
+  git am "${srcdir}"/0003-MinGW-w64-Fix-libibery-configure.patch
+  git am "${srcdir}"/0004-MinGW-w64-Use-gnu-printf.patch
+  git am "${srcdir}"/0005-bfd-Increase-_bfd_coff_max_nscns-to-65279.patch
+  rm -rf gdb readline libdecnumber sim
 }
 
 pkgver() {
